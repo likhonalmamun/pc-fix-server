@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const app = express();
 app.use(cors());
@@ -19,11 +19,33 @@ async function run() {
     const servicesCollection = client
       .db("assignment-11")
       .collection("services");
+    const reviewCollection = client.db("assignment-11").collection("reviews");
 
+    app.post("/reviews", async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send({ result });
+    });
+    app.get("/reviews/:sid", async (req, res) => {
+      const cursor = reviewCollection.find({ serviceId: req.params.sid });
+      const reviews = await cursor.toArray();
+      console.log(reviews);
+      res.send({ reviews });
+    });
     app.get("/services", async (req, res) => {
       const cursor = servicesCollection.find({});
       const services = await cursor.limit(3).toArray();
       res.send({ services });
+    });
+    app.get("/services/:id", async (req, res) => {
+      const query = { _id: ObjectId(req.params.id) };
+      const service = await servicesCollection.findOne(query);
+      res.json({ service });
+    });
+    app.get("/allServices", async (req, res) => {
+      const cursor = servicesCollection.find({});
+      const allServices = await cursor.toArray();
+      res.send({ allServices });
     });
     app.post("/services", async (req, res) => {
       const newService = req.body;
