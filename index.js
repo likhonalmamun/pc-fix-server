@@ -20,13 +20,15 @@ async function run() {
       .db("assignment-11")
       .collection("services");
 
-    app.get("/", (req, res) => {
-      res.send("server is working");
+    app.get("/services", async (req, res) => {
+      const cursor = servicesCollection.find({});
+      const services = await cursor.limit(3).toArray();
+      res.send({ services });
     });
     app.post("/services", async (req, res) => {
       const newService = req.body;
       const result = await servicesCollection.insertOne(newService);
-      res.send(result);
+      res.send({ result });
     });
   } catch {
     (err) => console.log(err);
