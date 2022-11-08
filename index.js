@@ -23,6 +23,11 @@ async function run() {
     app.get("/", (req, res) => {
       res.send("server is working");
     });
+    app.post("/services", async (req, res) => {
+      const newService = req.body;
+      const result = await servicesCollection.insertOne(newService);
+      res.send(result);
+    });
   } catch {
     (err) => console.log(err);
   }
