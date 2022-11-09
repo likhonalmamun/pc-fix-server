@@ -29,12 +29,20 @@ async function run() {
     app.get("/reviews/:sid", async (req, res) => {
       const cursor = reviewCollection.find({ serviceId: req.params.sid });
       const reviews = await cursor.toArray();
+      // console.log(reviews);
+      res.send({ reviews });
+    });
+
+    app.get("/reviews", async (req, res) => {
+      const cursor = reviewCollection.find({ reviewerEmail: req.query.email });
+      const reviews = await cursor.toArray();
       console.log(reviews);
       res.send({ reviews });
     });
     app.get("/services", async (req, res) => {
       const cursor = servicesCollection.find({});
       const services = await cursor.limit(3).toArray();
+
       res.send({ services });
     });
     app.get("/services/:id", async (req, res) => {
@@ -45,6 +53,7 @@ async function run() {
     app.get("/allServices", async (req, res) => {
       const cursor = servicesCollection.find({});
       const allServices = await cursor.toArray();
+      // console.log(allServices[0]);
       res.send({ allServices });
     });
     app.post("/services", async (req, res) => {
