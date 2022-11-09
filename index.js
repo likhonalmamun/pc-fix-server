@@ -28,14 +28,20 @@ async function run() {
     });
     app.get("/reviews/:sid", async (req, res) => {
       const cursor = reviewCollection.find({ serviceId: req.params.sid });
-      const reviews = await cursor.toArray();
+      const reviews = await cursor.sort({ time: -1 }).toArray();
       // console.log(reviews);
       res.send({ reviews });
+    });
+    app.get("/edit/:id", async (req, res) => {
+      const review = await reviewCollection.findOne({
+        _id: ObjectId(req.params.id),
+      });
+      res.send({ review });
     });
 
     app.get("/reviews", async (req, res) => {
       const cursor = reviewCollection.find({ reviewerEmail: req.query.email });
-      const reviews = await cursor.toArray();
+      const reviews = await cursor.sort({ time: -1 }).toArray();
       // console.log(reviews);
       res.send({ reviews });
     });
@@ -44,9 +50,20 @@ async function run() {
       const result = await reviewCollection.deleteOne({ _id: id });
       res.send({ result });
     });
+    app.patch("/review/:id", async (req, res) => {
+      const query = { _id: ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const newDoc = {
+        $set: {
+          text: req.body.newText,
+        },
+      };
+      const result = await reviewCollection.updateOne(query, newDoc, options);
+      res.send({ result });
+    });
     app.get("/services", async (req, res) => {
       const cursor = servicesCollection.find({});
-      const services = await cursor.limit(3).toArray();
+      const services = await cursor.sort({ time: -1 }).limit(3).toArray();
 
       res.send({ services });
     });
@@ -57,7 +74,7 @@ async function run() {
     });
     app.get("/allServices", async (req, res) => {
       const cursor = servicesCollection.find({});
-      const allServices = await cursor.toArray();
+      const allServices = await cursor.sort({ time: -1 }).toArray();
       // console.log(allServices[0]);
       res.send({ allServices });
     });
@@ -66,6 +83,7 @@ async function run() {
       const result = await servicesCollection.insertOne(newService);
       res.send({ result });
     });
+    // console.log(Date.now());
   } catch {
     (err) => console.log(err);
   }
