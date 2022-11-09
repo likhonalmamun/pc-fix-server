@@ -36,8 +36,13 @@ async function run() {
     app.get("/reviews", async (req, res) => {
       const cursor = reviewCollection.find({ reviewerEmail: req.query.email });
       const reviews = await cursor.toArray();
-      console.log(reviews);
+      // console.log(reviews);
       res.send({ reviews });
+    });
+    app.delete("/reviews/:id", async (req, res) => {
+      const id = ObjectId(req.params.id);
+      const result = await reviewCollection.deleteOne({ _id: id });
+      res.send({ result });
     });
     app.get("/services", async (req, res) => {
       const cursor = servicesCollection.find({});
