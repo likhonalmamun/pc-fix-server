@@ -14,6 +14,21 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+function verifyJwt(req, res, next) {
+  const token = req.headers.authentication.split(" ")[1];
+  if (!req.headers.authentication) {
+    return res.status(401).send({ message: "Unauthorized request !!" });
+  }
+  jwt.verify(token, process.env.JWT_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized request !!" });
+    } else {
+      req.decoded = decoded;
+      next();
+    }
+  });
+}
 async function run() {
   try {
     const servicesCollection = client
@@ -39,11 +54,18 @@ async function run() {
       res.send({ review });
     });
 
-    app.get("/reviews", async (req, res) => {
-      const cursor = reviewCollection.find({ reviewerEmail: req.query.email });
+    app.get("/reviews", verifyJwt, async (req, res) => {
+      const decoded = req.decoded;
+      // console.log(decoded);
+      if (!decoded.email === req.query.email) {
+        return res.status(403).send({ message: "Forbidden request !" });
+      }
+      const cursor = reviewCollection.find({
+        reviewerEmail: req.query.email,
+      });
       const reviews = await cursor.sort({ time: -1 }).toArray();
-      // console.log(reviews);
-      res.send({ reviews });
+       res.send({ reviews });
+     
     });
     app.delete("/reviews/:id", async (req, res) => {
       const id = ObjectId(req.params.id);
@@ -82,6 +104,15 @@ async function run() {
       const newService = req.body;
       const result = await servicesCollection.insertOne(newService);
       res.send({ result });
+    });
+    // token generation in login
+    app.post("/jwt", async (req, res) => {
+      const payload = req.body;
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "1d",
+      });
+      // console.log(token);
+      res.send({ token });
     });
     // console.log(Date.now());
   } catch {
